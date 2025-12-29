@@ -1,6 +1,9 @@
 const bg_colour = "#231f20";
 const snake_colour = "#c2c2c2";
 const food_colour = "#e66916";
+// Load food image
+const foodImg = new Image();
+foodImg.src = "/food.png"; // local image named "food.png"
 
 
 // const socket = io("http://localhost:3000");
@@ -90,9 +93,18 @@ function paintGame(state){
         const gridsize = state.gridsize;
         const size = canvas.width / gridsize;
 
-        //draw food
-        ctx.fillStyle = food_colour;
-        ctx.fillRect(food.x * size, food.y * size, size, size);
+        // //draw food
+        // ctx.fillStyle = food_colour;
+        // ctx.fillRect(food.x * size, food.y * size, size, size);
+        // Draw food as image
+if (foodImg.complete) { // if the image has loaded
+    ctx.drawImage(foodImg, food.x * size, food.y * size, size, size);
+} else {
+    // fallback rectangle if image not loaded yet
+    ctx.fillStyle = food_colour;
+    ctx.fillRect(food.x * size, food.y * size, size, size);
+}
+
 
         paintPlayer(state.players[0], size, snake_colour);
         //من اضافه کردم
