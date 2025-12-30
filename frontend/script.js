@@ -1,5 +1,5 @@
-const bg_colour = "#231f20";
-const snake_colour = "#c2c2c2";
+const bg_colour = "rgba(35, 31, 32, 1)";
+const snake_colour = "#35d2e7ff";
 const food_colour = "#e66916";
 // Load food image
 const foodImg = new Image();
@@ -8,13 +8,17 @@ foodImg.src = "/food.png"; // local image named "food.png"
 
 // const socket = io("http://localhost:3000");
 
-//من اضافه مردن
+
 console.log("Client script loaded");
 const socket = io("http://localhost:3000");
 socket.on("connect", () => {
   console.log("✅ Connected to server:", socket.id);
 });
-//
+
+socket.on('rematchStarted', () => {
+    gameActive = true;
+});
+
 
 
 
@@ -34,14 +38,21 @@ const joinGameBtn = document.getElementById("joinGameButton");
 const gameCodeInput = document.getElementById("GameCodeInput");
 const gameCodeDisplay = document.getElementById("gameCodeDisplay");
 
+//for game status and scores
+const statusText = document.getElementById("gameStatus");
+const scoreP1 = document.getElementById("scoreP1");
+const scoreP2 = document.getElementById("scoreP2");
+
+//play again button
+const playAgainBtn = document.getElementById("playAgainBtn");
+
+
 
 newGameBtn.addEventListener("click", newGame);
 joinGameBtn.addEventListener("click", joinGame);
 
 function newGame(){
-    //من اضافه کردم
-    console.log("🟢 New Game button clicked");
-    //
+    console.log(" New Game button clicked");
     socket.emit("newGame");
     init();
 }
@@ -52,6 +63,13 @@ function joinGame(){
     init();
    
 }
+
+//new game again
+playAgainBtn.addEventListener("click", () => {
+    playAgainBtn.style.display = "none";
+    socket.emit("rematch");
+    gameActive = true;
+});
 
 
 let canvas , ctx;
@@ -107,9 +125,8 @@ if (foodImg.complete) { // if the image has loaded
 
 
         paintPlayer(state.players[0], size, snake_colour);
-        //من اضافه کردم
            if (state.players[1]) {
-               paintPlayer(state.players[1], size, 'blue');
+               paintPlayer(state.players[1], size, '#ab4fbaff');
            }
 }
 
@@ -125,32 +142,47 @@ function paintPlayer(playerState, size, colour){
         playerNumber = number;
         }
 
+   
+
     function handleGameState(gameState){
-        if (!gameActive){
-            return;
-        }
-        gameState = JSON.parse(gameState);
-        requestAnimationFrame(() => paintGame(gameState));
+    if (!gameActive) return;
+
+    gameState = JSON.parse(gameState);
+
+    // Game Status
+    statusText.innerText = "Status: " + gameState.status;
+
+    // Scores
+    const p1Score = gameState.players[0].snake.length - 3;
+    scoreP1.innerText = Math.max(0, p1Score);
+
+    if (gameState.players[1]) {
+        const p2Score = gameState.players[1].snake.length - 3;
+        scoreP2.innerText = Math.max(0, p2Score);
     }
 
-    function handleGameOver(data){
-        if (!gameActive){
-            return;
-        }
-        data = JSON.parse(data);
-        gameActive = false;
+    requestAnimationFrame(() => paintGame(gameState));
+}
 
-        if (data.winner === playerNumber){
-            alert("You win!");
-        }else{
-            alert("You lose.");
-        }
-    }
+
+
+function handleGameOver(data) {
+    if (!gameActive) return;
+    data = JSON.parse(data);
+    gameActive = false;
+    alert(data.winner === playerNumber ? "You win!" : "You lose!");
+    playAgainBtn.style.backgroundColor = "#28a745"; 
+    playAgainBtn.style.color = "white";            
+    playAgainBtn.style.padding = "10px 20px";      
+    playAgainBtn.style.border = "none";
+    playAgainBtn.style.borderRadius = "5px";
+    playAgainBtn.style.cursor = "pointer";
+
+    playAgainBtn.style.display = "block";
+}
 
     function handleGameCode(gameCode){
-        //من اضافه کردم
-        console.log("🎮 Game code received from server:", gameCode);
-        //
+        console.log("Game code received from server:", gameCode);
         gameCodeDisplay.innerText = gameCode;
     }
 
@@ -164,10 +196,23 @@ function paintPlayer(playerState, size, colour){
         alert("This game is already in progress");
     }
 
+    // function reset(){
+    //     playerNumber = null;
+    //     gameCodeInput.value = "";
+    //     gameCodeDisplay.innerText = "";
+    //     initialScreen.style.display = "block";
+    //     gameScreen.style.display = "none";
+    // }
+
     function reset(){
-        playerNumber = null;
-        gameCodeInput.value = "";
-        gameCodeDisplay.innerText = "";
-        initialScreen.style.display = "block";
-        gameScreen.style.display = "none";
-    }
+    playerNumber = null;
+    gameCodeInput.value = "";
+    gameCodeDisplay.innerText = "";
+
+    scoreP1.innerText = "0";
+    scoreP2.innerText = "0";
+    statusText.innerText = "Status: Waiting";
+
+    initialScreen.style.display = "block";
+    gameScreen.style.display = "none";
+}

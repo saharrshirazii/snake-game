@@ -10,7 +10,6 @@
         #gameScreen{
             display: none;
         }
-        /* من اضافه کردم */
         canvas {
         border: 2px solid white;
         }
@@ -36,11 +35,20 @@
                     <h1>Your Game Code: <span id="gameCodeDisplay"></span></h1>
                     
                     <canvas id="canvas"></canvas>
+
+                    <h3 id="gameStatus">Status: Waiting</h3>
+
+                      <div style="text-align: center;">
+                          Player 1 Score: <span id="scoreP1">0</span> <br/>
+                          Player 2 Score: <span id="scoreP2">0</span><br/>
+                          <p><span style="font-weight: bold;">Your score will change when you eat food</span></p>
+                     </div>
+                     <button id="playAgainBtn" style="display:none;">Play Again</button>
+
                 </div>
             </div>
         </div>
     </section>
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script> -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.js"></script>
 
     <script src="script.js"></script>   

@@ -14,6 +14,7 @@ function initGame(){
 
 function createGameState(){
    return {
+    status: 'Waiting',
     players: [{
         pos:{
             x:3,
