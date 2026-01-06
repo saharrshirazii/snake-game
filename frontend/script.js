@@ -3,7 +3,7 @@ const snake_colour = "#35d2e7ff";
 const food_colour = "#e66916";
 // Load food image
 const foodImg = new Image();
-foodImg.src = "/food.png"; // local image named "food.png"
+foodImg.src = "food.png"; // local image named "food.png"
 
 
 
