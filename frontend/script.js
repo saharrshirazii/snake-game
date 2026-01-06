@@ -11,6 +11,7 @@ foodImg.src = "food.png"; // local image named "food.png"
 console.log("Client script loaded");
 // const socket = io("http://localhost:3000");
 const socket = io("https://mpapi.se");
+
 socket.on("connect", () => {
   console.log("✅ Connected to server:", socket.id);
 });
