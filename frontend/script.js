@@ -23,8 +23,10 @@ socket.on('rematchStarted', () => {
 
 
 
-
-socket.on('init', handleInit);
+socket.on('init', (number) => {
+    playerNumber = number;
+    init(); // Now the screen switches to the canvas
+});
 socket.on('gameState', handleGameState);
 socket.on('gameOver', handleGameOver);
 socket.on('gameCode', handleGameCode);
@@ -32,25 +34,34 @@ socket.on('unknownCode', handleUnknownCode);
 socket.on('tooManyPlayers', handleTooManyPlayers);
 
 
-const gameScreen = document.getElementById("gameScreen");
-const initialScreen = document.getElementById("initialScreen");
-const newGameBtn = document.getElementById("newGameButton");
-const joinGameBtn = document.getElementById("joinGameButton");
-const gameCodeInput = document.getElementById("GameCodeInput");
-const gameCodeDisplay = document.getElementById("gameCodeDisplay");
+let gameScreen, initialScreen, newGameBtn, joinGameBtn, gameCodeInput, gameCodeDisplay;
+let statusText, scoreP1, scoreP2, playAgainBtn;
 
 //for game status and scores
-const statusText = document.getElementById("gameStatus");
-const scoreP1 = document.getElementById("scoreP1");
-const scoreP2 = document.getElementById("scoreP2");
+// Attach handlers after DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    gameScreen = document.getElementById("gameScreen");
+    initialScreen = document.getElementById("initialScreen");
+    newGameBtn = document.getElementById("newGameButton");
+    joinGameBtn = document.getElementById("joinGameButton");
+    gameCodeInput = document.getElementById("GameCodeInput");
+    gameCodeDisplay = document.getElementById("gameCodeDisplay");
 
-//play again button
-const playAgainBtn = document.getElementById("playAgainBtn");
+    statusText = document.getElementById("gameStatus");
+    scoreP1 = document.getElementById("scoreP1");
+    scoreP2 = document.getElementById("scoreP2");
 
+    playAgainBtn = document.getElementById("playAgainBtn");
 
+    newGameBtn.addEventListener("click", newGame);
+    joinGameBtn.addEventListener("click", joinGame);
 
-newGameBtn.addEventListener("click", newGame);
-joinGameBtn.addEventListener("click", joinGame);
+    playAgainBtn.addEventListener("click", () => {
+        playAgainBtn.style.display = "none";
+        socket.emit("rematch");
+        gameActive = true;
+    });
+});
 
 function newGame(){
     console.log(" New Game button clicked");
@@ -61,23 +72,14 @@ function newGame(){
 function joinGame(){
     const code = gameCodeInput.value;
     socket.emit("joinGame", code);
-    init();
-   
+    // init();
 }
 
-// Then, only switch screens when the game actually starts
-socket.on('init', (number) => {
-    playerNumber = number;
-    init(); // Now the screen switches to the canvas
-});
-
-//new game again
-playAgainBtn.addEventListener("click", () => {
-    playAgainBtn.style.display = "none";
-    socket.emit("rematch");
-    gameActive = true;
-});
-
+// Consolidated single init handler: set playerNumber and start the client init
+// socket.on('init', (number) => {
+//     playerNumber = number;
+//     init(); // switch to game canvas when server confirms
+// });
 
 let canvas , ctx;
 let playerNumber;
@@ -145,9 +147,9 @@ function paintPlayer(playerState, size, colour){
     }
     }
 
-    function handleInit(number){
-        playerNumber = number;
-        }
+    // function handleInit(number){
+    //     playerNumber = number;
+    //     }
 
    
 

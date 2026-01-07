@@ -15,6 +15,8 @@ const { makeid } = require('./utils');
 
 const state = {};
 const clientRooms = {};
+// Track intervals so we don't start duplicates and can clear them
+const intervals = {};
 
 io.on('connection', client => {
 
@@ -27,28 +29,30 @@ io.on('connection', client => {
     function handleRematch() {
         const roomName = clientRooms[client.id];
         if (!roomName) return;
-        // If state[roomName] already exists, it means the other player 
-        // already clicked "Play Again", so we don't need to init again.
+
+        // If a game state already exists, do not re-init (other player may have already rematched)
         if (state[roomName]) {
-            return; 
+            return;
         }
-        // Reset game state
+
+        // Create/reset game state and start loop
         state[roomName] = initGame();
-        state[roomName].status = "Ongoing"; // Ensure status is set
-        // Restart game loop
+        state[roomName].status = "Ongoing";
+
+        // Clear any stray interval and start a fresh one
+        if (intervals[roomName]) {
+            clearInterval(intervals[roomName]);
+            delete intervals[roomName];
+        }
         startGameInterval(roomName);
-        // Notify both players
         io.to(roomName).emit('rematchStarted');
     }
 
     function handleJoinGame(gameCode) {
         console.log("Join game attempt:", gameCode);
 
-        // Check if game exists in your state
-        // Note: state is created in handleNewGame
         const room = io.sockets.adapter.rooms.get(gameCode);
         
-        // If room doesn't exist or no P1, return unknown
         if (!room || room.size === 0) {
             client.emit('unknownCode');
             return;
@@ -65,11 +69,11 @@ io.on('connection', client => {
         client.number = 2;
         client.emit('init', 2);
 
-        // Set Game Status
-        // Safety check in case state was deleted
-        if (state[gameCode]) {
-            state[gameCode].status = "Ongoing";
+        // Ensure a game state exists (if previous game ended and state was deleted)
+        if (!state[gameCode]) {
+            state[gameCode] = initGame();
         }
+        state[gameCode].status = "Ongoing";
         
         startGameInterval(gameCode);
     }
@@ -91,9 +95,7 @@ io.on('connection', client => {
             return;
         }
 
-        // FIX #2: Crash Prevention
-        // If the game is over, state[roomName] might be deleted. 
-        // Stop execution to prevent server crash.
+        // Crash prevention if state missing
         if (!state[roomName]) {
             return;
         }
@@ -109,13 +111,37 @@ io.on('connection', client => {
             state[roomName].players[client.number -1].vel = vel;
         }
     }
+
+    // Clean up on disconnect
+    client.on('disconnect', () => {
+        const roomName = clientRooms[client.id];
+        if (!roomName) return;
+        delete clientRooms[client.id];
+        client.leave(roomName);
+
+        const room = io.sockets.adapter.rooms.get(roomName);
+        if (!room || room.size === 0) {
+            // No players left — clear state and interval
+            if (state[roomName]) delete state[roomName];
+            if (intervals[roomName]) {
+                clearInterval(intervals[roomName]);
+                delete intervals[roomName];
+            }
+        } else {
+            // Notify remaining player
+            io.to(roomName).emit('playerDisconnected');
+        }
+    });
 });
 
 function startGameInterval(roomName){
+    // Do not start multiple intervals for the same room
+    if (intervals[roomName]) return;
+
     const intervalId = setInterval(() => {
-        // Safety check inside loop
         if (!state[roomName]) {
             clearInterval(intervalId);
+            if (intervals[roomName]) delete intervals[roomName];
             return;
         }
 
@@ -124,17 +150,18 @@ function startGameInterval(roomName){
         if (!winner){
             emitGameState(roomName, state[roomName]);
         } else {
-            //Game status
             state[roomName].status = "Game Over";
-            
             emitGameOver(roomName, winner);
-            
-            // Clean up state
+
+            // Clean up
             delete state[roomName];
             clearInterval(intervalId);
+            if (intervals[roomName]) delete intervals[roomName];
         }
     
     }, 1000 / frameRate);
+
+    intervals[roomName] = intervalId;
 }
 
 function emitGameState(roomName, state){
