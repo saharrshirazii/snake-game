@@ -9,8 +9,8 @@ foodImg.src = "food.png"; // local image named "food.png"
 
 
 console.log("Client script loaded");
-const socket = io("http://localhost:3000");
-// const socket = io("https://mpapi.se");
+// const socket = io("http://localhost:3000");
+const socket = io("https://mpapi.se");
 
 socket.on("connect", () => {
   console.log("✅ Connected to server:", socket.id);
@@ -55,7 +55,7 @@ joinGameBtn.addEventListener("click", joinGame);
 function newGame(){
     console.log(" New Game button clicked");
     socket.emit("newGame");
-    init();
+    // init();
 }
 
 function joinGame(){
@@ -64,6 +64,12 @@ function joinGame(){
     init();
    
 }
+
+// Then, only switch screens when the game actually starts
+socket.on('init', (number) => {
+    playerNumber = number;
+    init(); // Now the screen switches to the canvas
+});
 
 //new game again
 playAgainBtn.addEventListener("click", () => {
