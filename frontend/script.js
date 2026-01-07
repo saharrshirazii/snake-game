@@ -9,8 +9,8 @@ foodImg.src = "food.png"; // local image named "food.png"
 
 
 console.log("Client script loaded");
-// const socket = io("http://localhost:3000");
-const socket = io("https://mpapi.se");
+const socket = io("http://localhost:3000");
+// const socket = io("https://mpapi.se");
 
 socket.on("connect", () => {
   console.log("✅ Connected to server:", socket.id);
@@ -23,10 +23,8 @@ socket.on('rematchStarted', () => {
 
 
 
-socket.on('init', (number) => {
-    playerNumber = number;
-    init(); // Now the screen switches to the canvas
-});
+
+socket.on('init', handleInit);
 socket.on('gameState', handleGameState);
 socket.on('gameOver', handleGameOver);
 socket.on('gameCode', handleGameCode);
@@ -34,52 +32,46 @@ socket.on('unknownCode', handleUnknownCode);
 socket.on('tooManyPlayers', handleTooManyPlayers);
 
 
-let gameScreen, initialScreen, newGameBtn, joinGameBtn, gameCodeInput, gameCodeDisplay;
-let statusText, scoreP1, scoreP2, playAgainBtn;
+const gameScreen = document.getElementById("gameScreen");
+const initialScreen = document.getElementById("initialScreen");
+const newGameBtn = document.getElementById("newGameButton");
+const joinGameBtn = document.getElementById("joinGameButton");
+const gameCodeInput = document.getElementById("GameCodeInput");
+const gameCodeDisplay = document.getElementById("gameCodeDisplay");
 
 //for game status and scores
-// Attach handlers after DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    gameScreen = document.getElementById("gameScreen");
-    initialScreen = document.getElementById("initialScreen");
-    newGameBtn = document.getElementById("newGameButton");
-    joinGameBtn = document.getElementById("joinGameButton");
-    gameCodeInput = document.getElementById("GameCodeInput");
-    gameCodeDisplay = document.getElementById("gameCodeDisplay");
+const statusText = document.getElementById("gameStatus");
+const scoreP1 = document.getElementById("scoreP1");
+const scoreP2 = document.getElementById("scoreP2");
 
-    statusText = document.getElementById("gameStatus");
-    scoreP1 = document.getElementById("scoreP1");
-    scoreP2 = document.getElementById("scoreP2");
+//play again button
+const playAgainBtn = document.getElementById("playAgainBtn");
 
-    playAgainBtn = document.getElementById("playAgainBtn");
 
-    newGameBtn.addEventListener("click", newGame);
-    joinGameBtn.addEventListener("click", joinGame);
 
-    playAgainBtn.addEventListener("click", () => {
-        playAgainBtn.style.display = "none";
-        socket.emit("rematch");
-        gameActive = true;
-    });
-});
+newGameBtn.addEventListener("click", newGame);
+joinGameBtn.addEventListener("click", joinGame);
 
 function newGame(){
     console.log(" New Game button clicked");
     socket.emit("newGame");
-    // init();
+    init();
 }
 
 function joinGame(){
     const code = gameCodeInput.value;
     socket.emit("joinGame", code);
-    // init();
+    init();
+   
 }
 
-// Consolidated single init handler: set playerNumber and start the client init
-// socket.on('init', (number) => {
-//     playerNumber = number;
-//     init(); // switch to game canvas when server confirms
-// });
+//new game again
+playAgainBtn.addEventListener("click", () => {
+    playAgainBtn.style.display = "none";
+    socket.emit("rematch");
+    gameActive = true;
+});
+
 
 let canvas , ctx;
 let playerNumber;
@@ -147,9 +139,9 @@ function paintPlayer(playerState, size, colour){
     }
     }
 
-    // function handleInit(number){
-    //     playerNumber = number;
-    //     }
+    function handleInit(number){
+        playerNumber = number;
+        }
 
    
 
